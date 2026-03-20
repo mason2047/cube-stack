@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>立方体堆叠 — 数学教学</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #f0f2f5; overflow: hidden; font-family: -apple-system, "PingFang SC", system-ui, sans-serif; }
+  canvas { display: block; }
+
+  #ui {
+    position: fixed; top: 0; left: 0; bottom: 0; width: 280px;
+    background: rgba(255,255,255,0.96); backdrop-filter: blur(8px);
+    box-shadow: 2px 0 12px rgba(0,0,0,0.08);
+    padding: 20px; display: flex; flex-direction: column; gap: 16px;
+    overflow-y: auto; z-index: 10;
+  }
+
+  #ui h2 { font-size: 18px; color: #1a1a2e; }
+  #ui p.desc { font-size: 13px; color: #666; line-height: 1.5; }
+
+  .coord-input {
+    display: flex; gap: 8px; align-items: center;
+  }
+  .coord-input label {
+    font-size: 14px; font-weight: 700; width: 20px; text-align: center;
+  }
+  .coord-input label.lx { color: #e74c3c; }
+  .coord-input label.ly { color: #2ecc71; }
+  .coord-input label.lz { color: #3498db; }
+  .coord-input input {
+    flex: 1; height: 36px; border: 1.5px solid #dde1e8; border-radius: 8px;
+    padding: 0 10px; font-size: 15px; text-align: center; outline: none;
+    transition: border-color 0.15s;
+  }
+  .coord-input input:focus { border-color: #4a90d9; }
+
+  .btn-row { display: flex; gap: 8px; }
+  .btn {
+    flex: 1; padding: 10px 0; border: none; border-radius: 8px;
+    font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.15s;
+  }
+  .btn-add { background: #4a90d9; color: #fff; }
+  .btn-add:hover { background: #3a7bc8; }
+  .btn-remove { background: #fff; color: #e74c3c; border: 1.5px solid #e74c3c; }
+  .btn-remove:hover { background: #fef0ef; }
+  .btn-outline { background: #fff; color: #4a90d9; border: 1.5px solid #4a90d9; }
+  .btn-outline:hover { background: #eef4fc; }
+  .btn-clear { background: #fff; color: #999; border: 1.5px solid #ddd; }
+  .btn-clear:hover { background: #f8f8f8; }
+
+  .msg {
+    font-size: 12px; min-height: 18px; line-height: 18px; transition: all 0.2s;
+  }
+  .msg.error { color: #e74c3c; }
+  .msg.success { color: #2ecc71; }
+
+  .stats {
+    background: #f7f8fb; border-radius: 10px; padding: 14px;
+    display: flex; flex-direction: column; gap: 6px;
+  }
+  .stat-row {
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 13px; color: #555;
+  }
+  .stat-row .val { font-size: 18px; font-weight: 700; color: #1a1a2e; }
+
+  .presets { display: flex; flex-wrap: wrap; gap: 6px; }
+  .preset-btn {
+    padding: 6px 12px; border: 1.5px solid #dde1e8; border-radius: 6px;
+    background: #fff; font-size: 12px; cursor: pointer; color: #444;
+    transition: all 0.15s;
+  }
+  .preset-btn:hover { border-color: #4a90d9; color: #4a90d9; }
+
+  .toggle-row {
+    display: flex; align-items: center; justify-content: space-between;
+    font-size: 13px; color: #444;
+  }
+  .toggle {
+    width: 40px; height: 22px; background: #ccc; border-radius: 11px;
+    position: relative; cursor: pointer; transition: background 0.2s;
+  }
+  .toggle.on { background: #4a90d9; }
+  .toggle::after {
+    content: ''; position: absolute; top: 2px; left: 2px;
+    width: 18px; height: 18px; background: #fff; border-radius: 50%;
+    transition: transform 0.2s;
+  }
+  .toggle.on::after { transform: translateX(18px); }
+
+  .cube-list {
+    flex: 1; min-height: 0; overflow-y: auto;
+    font-size: 12px; color: #666; line-height: 1.8;
+    background: #f7f8fb; border-radius: 8px; padding: 10px;
+  }
+  .cube-list-title { font-size: 13px; font-weight: 600; color: #444; }
+
+  .hint {
+    font-size: 12px; color: #999; line-height: 1.5;
+    border-top: 1px solid #eee; padding-top: 10px;
+  }
+
+  section { display: flex; flex-direction: column; gap: 8px; }
+  section h3 { font-size: 14px; color: #333; font-weight: 600; }
+  hr { border: none; border-top: 1px solid #eee; }
+</style>
+</head>
+<body>
+<div id="ui">
+  <div>
+    <h2>立方体堆叠</h2>
+    <p class="desc">输入 XYZ 坐标，在 3D 空间自由放置立方体</p>
+  </div>
+
+  <section>
+    <h3>放置坐标</h3>
+    <div class="coord-input">
+      <label class="lx">X</label>
+      <input type="number" id="inX" value="0" min="0" max="9">
+      <label class="ly">Y</label>
+      <input type="number" id="inY" value="0" min="0" max="9">
+      <label class="lz">Z</label>
+      <input type="number" id="inZ" value="0" min="0" max="9">
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-add" id="btnAdd">放置</button>
+      <button class="btn btn-remove" id="btnRemove">移除</button>
+    </div>
+    <div class="msg" id="msg"></div>
+  </section>
+
+  <hr>
+
+  <section>
+    <h3>预设形状</h3>
+    <div class="presets">
+      <button class="preset-btn" data-shape="cube3">正方体 3³</button>
+      <button class="preset-btn" data-shape="pyramid">金字塔</button>
+      <button class="preset-btn" data-shape="stairs">阶梯</button>
+      <button class="preset-btn" data-shape="tower">塔</button>
+      <button class="preset-btn" data-shape="lshape">L 形</button>
+      <button class="preset-btn" data-shape="cross">十字</button>
+    </div>
+  </section>
+
+  <hr>
+
+  <div class="stats">
+    <div class="stat-row"><span>方块总数</span><span class="val" id="totalCount">0</span></div>
+    <div class="stat-row"><span>占据层数</span><span class="val" id="layerCount">0</span></div>
+    <div class="stat-row"><span>坐标范围</span><span id="rangeInfo" style="font-size:12px;color:#4a90d9;">—</span></div>
+  </div>
+
+  <div class="toggle-row">
+    <span>自动填充支撑</span>
+    <div class="toggle" id="toggleSupport"></div>
+  </div>
+  <div class="toggle-row">
+    <span>显示坐标轴</span>
+    <div class="toggle on" id="toggleAxes"></div>
+  </div>
+  <div class="toggle-row">
+    <span>显示网格标号</span>
+    <div class="toggle on" id="toggleLabels"></div>
+  </div>
+  <div class="toggle-row">
+    <span>自动旋转</span>
+    <div class="toggle" id="toggleRotate"></div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-outline" id="btnReset">重置视角</button>
+    <button class="btn btn-clear" id="btnClear">清空全部</button>
+  </div>
+
+  <div class="hint">
+    鼠标拖拽旋转 · 滚轮缩放 · 右键平移<br>
+    点击方块可快速选中其坐标
+  </div>
+</div>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+  }
+}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+// ========== Data ==========
+// key: "x,y,z" -> true
+const cubeMap = new Map();
+
+function key(x, y, z) { return `${x},${y},${z}`; }
+function has(x, y, z) { return cubeMap.has(key(x, y, z)); }
+
+function canPlace(x, y, z) {
+  if (x < 0 || y < 0 || z < 0 || x > 9 || y > 9 || z > 9) return '坐标超出范围 (0-9)';
+  if (has(x, y, z)) return '该位置已有方块';
+  return null;
+}
+
+function canRemove(x, y, z) {
+  if (!has(x, y, z)) return '该位置没有方块';
+  return null;
+}
+
+let autoSupport = false;
+
+function addCube(x, y, z) {
+  cubeMap.set(key(x, y, z), { x, y, z });
+  if (autoSupport) {
+    // 自动填充从 y-1 到 0 的所有支撑方块
+    for (let sy = y - 1; sy >= 0; sy--) {
+      if (!has(x, sy, z)) {
+        cubeMap.set(key(x, sy, z), { x, y: sy, z });
+      }
+    }
+  }
+}
+function removeCube(x, y, z) { cubeMap.delete(key(x, y, z)); }
+function clearAll() { cubeMap.clear(); }
+
+// ========== Scene ==========
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0xf0f2f5);
+
+const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 200);
+camera.position.set(12, 10, 14);
+
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+document.body.appendChild(renderer.domElement);
+
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.dampingFactor = 0.08;
+controls.target.set(2, 1.5, 2);
+
+// Lights
+scene.add(new THREE.AmbientLight(0xffffff, 0.55));
+const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
+dirLight.position.set(10, 18, 12);
+dirLight.castShadow = true;
+dirLight.shadow.mapSize.set(1024, 1024);
+dirLight.shadow.camera.left = -14;
+dirLight.shadow.camera.right = 14;
+dirLight.shadow.camera.top = 14;
+dirLight.shadow.camera.bottom = -14;
+dirLight.shadow.radius = 2;
+scene.add(dirLight);
+const fill = new THREE.DirectionalLight(0x88aadd, 0.4);
+fill.position.set(-8, 4, -6);
+scene.add(fill);
+
+// Ground
+const groundMat = new THREE.MeshStandardMaterial({ color: 0xe8eaed, roughness: 0.9 });
+const ground = new THREE.Mesh(new THREE.PlaneGeometry(40, 40), groundMat);
+ground.rotation.x = -Math.PI / 2;
+ground.position.y = -0.01;
+ground.receiveShadow = true;
+scene.add(ground);
+
+// ========== Visual groups ==========
+const cubeGroup = new THREE.Group();
+scene.add(cubeGroup);
+const axesGroup = new THREE.Group();
+scene.add(axesGroup);
+const labelGroup = new THREE.Group();
+scene.add(labelGroup);
+// Ghost preview
+const ghostMat = new THREE.MeshStandardMaterial({
+  color: 0x4a90d9, transparent: true, opacity: 0.25, depthWrite: false,
+});
+const ghostEdgeMat = new THREE.LineBasicMaterial({ color: 0x4a90d9, transparent: true, opacity: 0.4 });
+const ghostMesh = new THREE.Mesh(new THREE.BoxGeometry(0.96, 0.96, 0.96), ghostMat);
+const ghostEdge = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(0.96, 0.96, 0.96)), ghostEdgeMat);
+ghostMesh.visible = false;
+ghostEdge.visible = false;
+scene.add(ghostMesh);
+scene.add(ghostEdge);
+
+// Layer colors
+const layerColors = [
+  0x4a90d9, 0xe8524a, 0x2ecc71, 0xf39c12,
+  0x9b59b6, 0x1abc9c, 0xe67e22, 0x3498db,
+  0xc0392b, 0x27ae60,
+];
+
+const boxGeo = new THREE.BoxGeometry(0.96, 0.96, 0.96);
+const edgeGeo = new THREE.EdgesGeometry(boxGeo);
+
+let showAxesFlag = true;
+let showLabels = true;
+let cubeMeshes = [];
+
+// ========== Build visuals ==========
+function buildAxes() {
+  axesGroup.clear();
+  if (!showAxesFlag) return;
+
+  const len = 11;
+  const axes = [
+    { dir: [1, 0, 0], color: 0xe74c3c, label: 'X' },
+    { dir: [0, 1, 0], color: 0x2ecc71, label: 'Y' },
+    { dir: [0, 0, 1], color: 0x3498db, label: 'Z' },
+  ];
+
+  axes.forEach(({ dir, color }) => {
+    const pts = [new THREE.Vector3(-0.5, 0, -0.5), new THREE.Vector3(
+      dir[0] * len - 0.5, dir[1] * len, dir[2] * len - 0.5
+    )];
+    const geo = new THREE.BufferGeometry().setFromPoints(pts);
+    axesGroup.add(new THREE.Line(geo, new THREE.LineBasicMaterial({ color, linewidth: 2 })));
+
+    const cone = new THREE.Mesh(
+      new THREE.ConeGeometry(0.12, 0.35, 8),
+      new THREE.MeshBasicMaterial({ color })
+    );
+    cone.position.copy(pts[1]);
+    if (dir[0]) cone.rotation.z = -Math.PI / 2;
+    if (dir[2]) cone.rotation.x = Math.PI / 2;
+    axesGroup.add(cone);
+  });
+}
+
+function makeTextSprite(text, color = '#666') {
+  const canvas = document.createElement('canvas');
+  canvas.width = 64; canvas.height = 32;
+  const ctx = canvas.getContext('2d');
+  ctx.font = 'bold 22px sans-serif';
+  ctx.fillStyle = color;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(text, 32, 16);
+  const tex = new THREE.CanvasTexture(canvas);
+  tex.minFilter = THREE.LinearFilter;
+  const mat = new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: false });
+  const sprite = new THREE.Sprite(mat);
+  sprite.scale.set(0.6, 0.3, 1);
+  return sprite;
+}
+
+function buildLabels() {
+  labelGroup.clear();
+  if (!showLabels) return;
+
+  for (let i = 0; i <= 9; i++) {
+    // X axis labels
+    const sx = makeTextSprite(String(i), '#e74c3c');
+    sx.position.set(i, -0.35, -0.5);
+    labelGroup.add(sx);
+    // Z axis labels
+    const sz = makeTextSprite(String(i), '#3498db');
+    sz.position.set(-0.5, -0.35, i);
+    labelGroup.add(sz);
+  }
+  for (let i = 0; i <= 9; i++) {
+    const sy = makeTextSprite(String(i), '#2ecc71');
+    sy.position.set(-0.7, i + 0.5, -0.5);
+    labelGroup.add(sy);
+  }
+
+  // Grid lines on ground (XZ plane)
+  const gridMat = new THREE.LineBasicMaterial({ color: 0xcccccc, transparent: true, opacity: 0.5 });
+  for (let i = 0; i <= 10; i++) {
+    const pts1 = [new THREE.Vector3(i - 0.5, 0, -0.5), new THREE.Vector3(i - 0.5, 0, 9.5)];
+    labelGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts1), gridMat));
+    const pts2 = [new THREE.Vector3(-0.5, 0, i - 0.5), new THREE.Vector3(9.5, 0, i - 0.5)];
+    labelGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts2), gridMat));
+  }
+}
+
+function rebuildCubes() {
+  cubeGroup.clear();
+  cubeMeshes = [];
+
+  cubeMap.forEach(({ x, y, z }) => {
+    const color = layerColors[y % layerColors.length];
+    const mat = new THREE.MeshStandardMaterial({ color, roughness: 0.45, metalness: 0.05 });
+    const mesh = new THREE.Mesh(boxGeo, mat);
+    mesh.position.set(x, y + 0.5, z);
+    mesh.castShadow = true;
+    mesh.receiveShadow = true;
+    mesh.userData = { cx: x, cy: y, cz: z };
+    cubeGroup.add(mesh);
+    cubeMeshes.push(mesh);
+
+    const edge = new THREE.LineSegments(edgeGeo, new THREE.LineBasicMaterial({ color: 0x333333, transparent: true, opacity: 0.25 }));
+    edge.position.copy(mesh.position);
+    cubeGroup.add(edge);
+  });
+
+  updateStats();
+}
+
+function updateStats() {
+  document.getElementById('totalCount').textContent = cubeMap.size;
+  if (cubeMap.size === 0) {
+    document.getElementById('layerCount').textContent = '0';
+    document.getElementById('rangeInfo').textContent = '—';
+    return;
+  }
+  let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity, minZ = Infinity, maxZ = -Infinity;
+  cubeMap.forEach(({ x, y, z }) => {
+    minX = Math.min(minX, x); maxX = Math.max(maxX, x);
+    minY = Math.min(minY, y); maxY = Math.max(maxY, y);
+    minZ = Math.min(minZ, z); maxZ = Math.max(maxZ, z);
+  });
+  document.getElementById('layerCount').textContent = maxY - minY + 1;
+  document.getElementById('rangeInfo').textContent = `X[${minX}-${maxX}] Y[${minY}-${maxY}] Z[${minZ}-${maxZ}]`;
+}
+
+function updateGhost() {
+  const x = parseInt(document.getElementById('inX').value) || 0;
+  const y = parseInt(document.getElementById('inY').value) || 0;
+  const z = parseInt(document.getElementById('inZ').value) || 0;
+  const err = canPlace(x, y, z);
+  ghostMesh.visible = !err;
+  ghostEdge.visible = !err;
+  if (!err) {
+    ghostMesh.position.set(x, y + 0.5, z);
+    ghostEdge.position.set(x, y + 0.5, z);
+  }
+}
+
+function showMsg(text, type) {
+  const el = document.getElementById('msg');
+  el.textContent = text;
+  el.className = 'msg ' + type;
+  if (type === 'success') setTimeout(() => { el.textContent = ''; el.className = 'msg'; }, 1500);
+}
+
+// ========== UI bindings ==========
+document.getElementById('btnAdd').addEventListener('click', () => {
+  const x = parseInt(document.getElementById('inX').value) || 0;
+  const y = parseInt(document.getElementById('inY').value) || 0;
+  const z = parseInt(document.getElementById('inZ').value) || 0;
+  const err = canPlace(x, y, z);
+  if (err) { showMsg(err, 'error'); return; }
+  addCube(x, y, z);
+  rebuildCubes();
+  showMsg(`已放置 (${x}, ${y}, ${z})`, 'success');
+  // Auto increment Y for quick stacking
+  document.getElementById('inY').value = y + 1;
+  updateGhost();
+});
+
+document.getElementById('btnRemove').addEventListener('click', () => {
+  const x = parseInt(document.getElementById('inX').value) || 0;
+  const y = parseInt(document.getElementById('inY').value) || 0;
+  const z = parseInt(document.getElementById('inZ').value) || 0;
+  const err = canRemove(x, y, z);
+  if (err) { showMsg(err, 'error'); return; }
+  removeCube(x, y, z);
+  rebuildCubes();
+  showMsg(`已移除 (${x}, ${y}, ${z})`, 'success');
+  updateGhost();
+});
+
+document.getElementById('btnClear').addEventListener('click', () => {
+  clearAll();
+  rebuildCubes();
+  showMsg('已清空', 'success');
+  updateGhost();
+});
+
+document.getElementById('btnReset').addEventListener('click', () => {
+  camera.position.set(12, 10, 14);
+  controls.target.set(2, 1.5, 2);
+});
+
+// Coordinate input changes -> update ghost
+['inX', 'inY', 'inZ'].forEach(id => {
+  document.getElementById(id).addEventListener('input', updateGhost);
+});
+
+// Keyboard: Enter to place
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && (e.target.id === 'inX' || e.target.id === 'inY' || e.target.id === 'inZ')) {
+    document.getElementById('btnAdd').click();
+  }
+});
+
+// Toggles
+function bindToggle(id, initial, cb) {
+  const el = document.getElementById(id);
+  el.addEventListener('click', () => {
+    el.classList.toggle('on');
+    cb(el.classList.contains('on'));
+  });
+}
+bindToggle('toggleSupport', false, v => { autoSupport = v; });
+bindToggle('toggleAxes', true, v => { showAxesFlag = v; buildAxes(); });
+bindToggle('toggleLabels', true, v => { showLabels = v; buildLabels(); });
+bindToggle('toggleRotate', false, v => { controls.autoRotate = v; controls.autoRotateSpeed = 2; });
+
+// Presets
+const presets = {
+  cube3() {
+    for (let x = 0; x < 3; x++)
+      for (let y = 0; y < 3; y++)
+        for (let z = 0; z < 3; z++)
+          addCube(x, y, z);
+  },
+  pyramid() {
+    const sizes = [5, 3, 1];
+    sizes.forEach((s, yi) => {
+      const off = Math.floor((5 - s) / 2);
+      for (let x = 0; x < s; x++)
+        for (let z = 0; z < s; z++)
+          addCube(x + off, yi, z + off);
+    });
+  },
+  stairs() {
+    for (let i = 0; i < 5; i++)
+      for (let y = 0; y <= i; y++)
+        addCube(i, y, 0);
+  },
+  tower() {
+    for (let y = 0; y < 8; y++) addCube(0, y, 0);
+  },
+  lshape() {
+    for (let x = 0; x < 4; x++) addCube(x, 0, 0);
+    for (let z = 1; z < 3; z++) addCube(0, 0, z);
+    for (let x = 0; x < 4; x++) addCube(x, 1, 0);
+    for (let z = 1; z < 3; z++) addCube(0, 1, z);
+  },
+  cross() {
+    for (let i = 0; i < 5; i++) addCube(i, 0, 2);
+    for (let i = 0; i < 5; i++) if (i !== 2) addCube(2, 0, i);
+  },
+};
+
+document.querySelectorAll('.preset-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    clearAll();
+    presets[btn.dataset.shape]();
+    rebuildCubes();
+    updateGhost();
+    showMsg('已加载预设', 'success');
+  });
+});
+
+// Click cube to select coords
+const raycaster = new THREE.Raycaster();
+const mouse = new THREE.Vector2();
+let isDragging = false;
+renderer.domElement.addEventListener('pointerdown', () => isDragging = false);
+renderer.domElement.addEventListener('pointermove', () => isDragging = true);
+renderer.domElement.addEventListener('pointerup', (e) => {
+  if (isDragging) return;
+  const rect = renderer.domElement.getBoundingClientRect();
+  mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+  mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+  raycaster.setFromCamera(mouse, camera);
+  const hits = raycaster.intersectObjects(cubeMeshes);
+  if (hits.length > 0) {
+    const { cx, cy, cz } = hits[0].object.userData;
+    document.getElementById('inX').value = cx;
+    document.getElementById('inY').value = cy;
+    document.getElementById('inZ').value = cz;
+    updateGhost();
+  }
+});
+
+// ========== Resize ==========
+function handleResize() {
+  const w = innerWidth, h = innerHeight;
+  camera.aspect = w / h;
+  camera.updateProjectionMatrix();
+  renderer.setSize(w, h);
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+}
+window.addEventListener('resize', handleResize);
+handleResize();
+
+// ========== Init & Animate ==========
+buildAxes();
+buildLabels();
+
+// Load default: small pyramid
+presets.pyramid();
+rebuildCubes();
+updateGhost();
+
+function animate() {
+  requestAnimationFrame(animate);
+  controls.update();
+  renderer.render(scene, camera);
+}
+animate();
+</script>
+</body>
+</html>
