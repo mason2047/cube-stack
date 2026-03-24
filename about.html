@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>功能说明 — 立方体堆叠</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #f0f2f5;
+    font-family: -apple-system, "PingFang SC", system-ui, sans-serif;
+    color: #1a1a2e;
+    line-height: 1.7;
+  }
+
+  .container {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 48px 24px 80px;
+  }
+
+  .back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 14px;
+    color: #4a90d9;
+    text-decoration: none;
+    margin-bottom: 32px;
+  }
+  .back-link:hover { text-decoration: underline; }
+
+  h1 {
+    font-size: 28px;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+  .subtitle {
+    font-size: 15px;
+    color: #666;
+    margin-bottom: 40px;
+  }
+
+  .section {
+    margin-bottom: 36px;
+  }
+  .section h2 {
+    font-size: 18px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #e8eaed;
+  }
+
+  .feature-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .feature-list li {
+    background: #fff;
+    border-radius: 10px;
+    padding: 16px 20px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  }
+  .feature-list li strong {
+    display: block;
+    font-size: 15px;
+    color: #1a1a2e;
+    margin-bottom: 4px;
+  }
+  .feature-list li p {
+    font-size: 13px;
+    color: #666;
+    margin: 0;
+  }
+
+  .preset-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 10px;
+  }
+  .preset-card {
+    background: #fff;
+    border-radius: 8px;
+    padding: 14px 16px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  }
+  .preset-card strong {
+    font-size: 14px;
+    color: #1a1a2e;
+  }
+  .preset-card p {
+    font-size: 12px;
+    color: #888;
+    margin-top: 4px;
+  }
+
+  .controls-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #fff;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  }
+  .controls-table th,
+  .controls-table td {
+    text-align: left;
+    padding: 12px 16px;
+    font-size: 14px;
+  }
+  .controls-table th {
+    background: #f7f8fb;
+    color: #666;
+    font-weight: 600;
+    font-size: 13px;
+  }
+  .controls-table td:first-child {
+    font-weight: 600;
+    color: #4a90d9;
+    white-space: nowrap;
+  }
+  .controls-table tr + tr td {
+    border-top: 1px solid #f0f0f0;
+  }
+
+  .toggle-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .toggle-list li {
+    background: #fff;
+    border-radius: 8px;
+    padding: 12px 16px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    font-size: 14px;
+  }
+  .toggle-list li strong { color: #333; }
+  .toggle-list li span { color: #888; font-size: 13px; }
+
+  .tech-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .tech-tags span {
+    background: #fff;
+    border: 1.5px solid #dde1e8;
+    border-radius: 6px;
+    padding: 6px 14px;
+    font-size: 13px;
+    color: #555;
+  }
+
+  .cta {
+    display: inline-block;
+    margin-top: 24px;
+    padding: 12px 28px;
+    background: #4a90d9;
+    color: #fff;
+    border-radius: 8px;
+    text-decoration: none;
+    font-size: 15px;
+    font-weight: 600;
+    transition: background 0.15s;
+  }
+  .cta:hover { background: #3a7bc8; }
+</style>
+</head>
+<body>
+<div class="container">
+  <a href="index.html" class="back-link">&larr; 返回工具</a>
+
+  <h1>立方体堆叠</h1>
+  <p class="subtitle">一个 3D 交互式数学教学工具，在三维空间中自由放置和可视化立方体</p>
+
+  <div class="section">
+    <h2>核心功能</h2>
+    <ul class="feature-list">
+      <li>
+        <strong>坐标放置与移除</strong>
+        <p>输入 X / Y / Z 坐标（范围 0-9），精确地在 3D 空间中放置或移除立方体。支持 Enter 键快速放置，放置后 Y 坐标自动递增，方便连续堆叠。</p>
+      </li>
+      <li>
+        <strong>实时 3D 预览</strong>
+        <p>基于 Three.js 渲染引擎，提供流畅的 3D 可视化。方块按所在层（Y 轴）自动着色，便于区分不同高度。支持阴影效果和抗锯齿渲染。</p>
+      </li>
+      <li>
+        <strong>幽灵预览</strong>
+        <p>输入坐标时，半透明的幽灵方块会实时显示预计放置位置，帮助用户确认操作目标。</p>
+      </li>
+      <li>
+        <strong>点击选中</strong>
+        <p>直接在 3D 视图中点击任意已放置的方块，坐标输入框会自动填入该方块的 XYZ 坐标，方便快速定位和编辑。</p>
+      </li>
+      <li>
+        <strong>实时统计</strong>
+        <p>面板中实时显示方块总数、占据层数和三轴坐标范围，帮助理解空间结构。</p>
+      </li>
+    </ul>
+  </div>
+
+  <div class="section">
+    <h2>预设形状</h2>
+    <p style="font-size:14px;color:#666;margin-bottom:12px;">内置 6 种常见几何形状，一键加载：</p>
+    <div class="preset-grid">
+      <div class="preset-card">
+        <strong>正方体 3&sup3;</strong>
+        <p>3&times;3&times;3 的标准立方体，共 27 个方块</p>
+      </div>
+      <div class="preset-card">
+        <strong>金字塔</strong>
+        <p>5&times;5 底层逐级缩小至 1&times;1 顶层</p>
+      </div>
+      <div class="preset-card">
+        <strong>阶梯</strong>
+        <p>逐级递增的阶梯造型</p>
+      </div>
+      <div class="preset-card">
+        <strong>塔</strong>
+        <p>单列 8 层的高塔结构</p>
+      </div>
+      <div class="preset-card">
+        <strong>L 形</strong>
+        <p>两层 L 形结构</p>
+      </div>
+      <div class="preset-card">
+        <strong>十字</strong>
+        <p>平面十字形排列</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>视图控制</h2>
+    <table class="controls-table">
+      <tr><th>操作</th><th>说明</th></tr>
+      <tr><td>鼠标左键拖拽</td><td>旋转视角</td></tr>
+      <tr><td>鼠标滚轮</td><td>缩放视图</td></tr>
+      <tr><td>鼠标右键拖拽</td><td>平移视图</td></tr>
+      <tr><td>重置视角</td><td>恢复默认观察角度</td></tr>
+    </table>
+  </div>
+
+  <div class="section">
+    <h2>开关选项</h2>
+    <ul class="toggle-list">
+      <li><strong>自动填充支撑</strong> — <span>放置高处方块时，自动补全下方所有空缺位置</span></li>
+      <li><strong>显示坐标轴</strong> — <span>显示/隐藏 XYZ 三色坐标轴</span></li>
+      <li><strong>显示网格标号</strong> — <span>显示/隐藏地面网格和刻度标号</span></li>
+      <li><strong>自动旋转</strong> — <span>开启后视角自动缓慢旋转，便于观察全貌</span></li>
+    </ul>
+  </div>
+
+  <div class="section">
+    <h2>技术栈</h2>
+    <div class="tech-tags">
+      <span>Three.js v0.170</span>
+      <span>Vanilla JavaScript</span>
+      <span>ES Modules</span>
+      <span>GitHub Pages</span>
+    </div>
+  </div>
+
+  <a href="index.html" class="cta">开始使用</a>
+</div>
+</body>
+</html>
